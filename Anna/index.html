@@ -1,0 +1,1134 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>С годовщиной ❤️</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300;1,400&family=Dancing+Script:wght@400;600;700&display=swap');
+
+:root {
+  --rose: #ff6b8a; --rose-light: #ffb3c6; --rose-deep: #c2185b;
+  --gold: #f0c080; --dark: #0d0610; --darker: #07030a;
+  --glass: rgba(255,255,255,0.07); --glass-border: rgba(255,255,255,0.15);
+}
+
+* { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+html,body { width:100%; height:100%; background:var(--darker); overflow:hidden; font-family:'Cormorant Garamond',serif; color:#fff; user-select:none; }
+
+/* ── BG CANVAS ── */
+#bg-canvas { position:fixed; inset:0; width:100%; height:100%; pointer-events:none; z-index:1; }
+
+/* ── SCENES ── */
+.scene { position:fixed; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; z-index:10; opacity:0; pointer-events:none; transition:opacity 1.2s ease; }
+.scene.active { opacity:1; pointer-events:all; }
+
+/* ══ SCENE 1: LOADER ══ */
+#scene-loader { background:radial-gradient(ellipse at 50% 40%,#1a0520 0%,#07030a 70%); }
+
+.loader-text {
+  font-family:'Dancing Script',cursive;
+  font-size:clamp(1.6rem,6vw,2.4rem);
+  color:var(--rose-light);
+  text-align:center; padding:0 2rem;
+  opacity:0; animation:fadeInGlow 1.2s ease forwards 0.6s;
+  text-shadow:0 0 40px rgba(255,107,138,0.7),0 0 80px rgba(255,107,138,0.3);
+}
+@keyframes fadeInGlow {
+  from { opacity:0; transform:translateY(10px) scale(0.96); }
+  to   { opacity:1; transform:translateY(0) scale(1); }
+}
+.loader-bar { margin-top:2.5rem; width:160px; height:2px; background:rgba(255,255,255,0.1); border-radius:2px; overflow:hidden; }
+.loader-fill { height:100%; width:0; background:linear-gradient(90deg,var(--rose),var(--gold),var(--rose-light)); animation:loadFill 3.4s ease forwards 1s; }
+@keyframes loadFill { to { width:100%; } }
+
+/* ══ SCENE 2: 3D HEART (WebGL) ══ */
+#scene-heart { background:radial-gradient(ellipse at 50% 50%,#1a0520 0%,#07030a 80%); }
+#heart-canvas { position:absolute; inset:0; width:100%; height:100%; }
+
+/* ══ SCENE 3: 3D ENVELOPE ══ */
+#scene-envelope { background:radial-gradient(ellipse at 50% 40%,#160820 0%,#07030a 75%); perspective:1000px; }
+
+.envelope-wrap { display:flex; flex-direction:column; align-items:center; gap:2rem; cursor:pointer; }
+
+.envelope-3d {
+  width:min(300px,78vw);
+  height:min(210px,57vw);
+  position:relative;
+  transform-style:preserve-3d;
+  transform:rotateX(8deg) rotateY(-6deg);
+  transition:transform 0.4s ease;
+  filter:drop-shadow(0 20px 40px rgba(255,107,138,0.35));
+  animation:envFloat 4s ease-in-out infinite;
+  cursor:pointer;
+}
+@keyframes envFloat {
+  0%,100% { transform:rotateX(8deg) rotateY(-6deg) translateY(0); }
+  50%      { transform:rotateX(5deg) rotateY(6deg) translateY(-12px); }
+}
+.envelope-3d:hover { animation-play-state:paused; transform:rotateX(0deg) rotateY(0deg) scale(1.05); }
+
+/* env body — front face */
+.env-front {
+  position:absolute; inset:0;
+  background:linear-gradient(160deg,#2a0d35 0%,#1a0825 60%,#2d1240 100%);
+  border:1px solid rgba(255,150,180,0.2);
+  border-radius:6px 6px 10px 10px;
+  box-shadow:0 8px 30px rgba(0,0,0,0.6), inset 0 1px 0 rgba(255,255,255,0.08);
+  backface-visibility:hidden;
+  overflow:hidden;
+}
+/* V-fold lines on front */
+.env-front::after {
+  content:''; position:absolute; bottom:0; left:0; right:0; height:60%;
+  background:linear-gradient(to top right, transparent 49.5%, rgba(255,120,160,0.08) 50%, transparent 50.5%),
+             linear-gradient(to top left,  transparent 49.5%, rgba(255,120,160,0.08) 50%, transparent 50.5%);
+}
+
+/* Envelope side shadow (3D depth) */
+.env-side {
+  position:absolute; top:4px; right:-8px;
+  width:8px; height:calc(100% - 8px);
+  background:linear-gradient(to right,#1a0825,#0d0415);
+  transform:rotateY(90deg); transform-origin:left;
+  border-radius:0 4px 4px 0;
+}
+.env-bottom {
+  position:absolute; bottom:-6px; left:4px;
+  width:calc(100% - 8px); height:6px;
+  background:linear-gradient(to bottom,#1a0825,#0d0415);
+  transform:rotateX(-90deg); transform-origin:top;
+  border-radius:0 0 6px 6px;
+}
+
+/* Flap with 3D flip */
+.env-flap-3d {
+  position:absolute; top:0; left:0; width:100%; height:55%;
+  transform-origin:top center;
+  transform-style:preserve-3d;
+  transition:transform 1s cubic-bezier(0.4,0,0.2,1);
+  z-index:4;
+}
+.env-flap-3d .flap-face {
+  width:100%; height:100%;
+  background:linear-gradient(170deg,#3d1550 0%,#28103a 100%);
+  clip-path:polygon(0 0,100% 0,50% 100%);
+  border:1px solid rgba(255,150,180,0.15);
+  box-shadow:0 4px 20px rgba(0,0,0,0.5);
+  backface-visibility:hidden;
+}
+.env-flap-3d.open { transform:perspective(600px) rotateX(-185deg); }
+
+.env-seal {
+  position:absolute; top:38%; left:50%;
+  transform:translate(-50%,-50%);
+  width:38px; height:38px;
+  background:radial-gradient(circle,#ff6b8a 0%,#c2185b 70%);
+  border-radius:50%;
+  display:flex; align-items:center; justify-content:center;
+  font-size:1.15rem;
+  box-shadow:0 0 20px rgba(255,107,138,0.8),0 0 50px rgba(255,107,138,0.3);
+  z-index:5; cursor:pointer;
+  animation:sealPulse 2s ease-in-out infinite;
+  transition:opacity 0.4s ease, transform 0.4s ease;
+}
+@keyframes sealPulse {
+  0%,100% { box-shadow:0 0 20px rgba(255,107,138,0.8),0 0 50px rgba(255,107,138,0.3); transform:translate(-50%,-50%) scale(1); }
+  50%      { box-shadow:0 0 35px rgba(255,107,138,1),0 0 70px rgba(255,107,138,0.5); transform:translate(-50%,-50%) scale(1.1); }
+}
+
+/* Letter paper rising from envelope */
+.letter-slip {
+  position:absolute;
+  width:88%; left:6%; bottom:8%; height:85%;
+  background:linear-gradient(170deg,#fff9f5 0%,#fff0eb 100%);
+  border-radius:4px;
+  z-index:2;
+  transform:translateY(0) translateZ(0);
+  transition:transform 1.2s cubic-bezier(0.34,1.4,0.64,1), opacity 0.3s ease;
+  box-shadow:0 -4px 20px rgba(0,0,0,0.4);
+  backface-visibility:hidden;
+}
+.letter-slip.fly { transform:translateY(-130%) translateZ(20px); }
+
+.envelope-hint {
+  font-family:'Cormorant Garamond',serif;
+  font-size:clamp(1rem,4vw,1.3rem);
+  color:var(--rose-light);
+  letter-spacing:0.08em;
+  text-shadow:0 0 25px rgba(255,107,138,0.6);
+  animation:breathe 2.5s ease-in-out infinite;
+}
+@keyframes breathe {
+  0%,100% { transform:scale(1); opacity:0.85; }
+  50%      { transform:scale(1.03); opacity:1; }
+}
+
+/* ══ SCENE 4: LETTER ══ */
+#scene-letter {
+  background:radial-gradient(ellipse at 50% 30%,#1a0820 0%,#07030a 80%);
+  overflow-y:auto; overflow-x:hidden;
+  justify-content:flex-start;
+  padding:2rem 1.5rem 6rem;
+  -webkit-overflow-scrolling:touch;
+}
+
+.letter-container { max-width:600px; width:100%; margin:0 auto; }
+
+.letter-card {
+  background:linear-gradient(160deg,rgba(255,249,245,0.97) 0%,rgba(255,240,235,0.96) 100%);
+  border-radius:18px;
+  padding:clamp(1.5rem,6vw,2.5rem) clamp(1.2rem,5vw,2rem);
+  box-shadow:0 30px 80px rgba(0,0,0,0.6),0 0 0 1px rgba(255,255,255,0.1),inset 0 1px 0 rgba(255,255,255,0.8);
+  position:relative; overflow:hidden;
+  transform-style:preserve-3d;
+  transform:perspective(800px) rotateX(0deg);
+  transition:transform 0.4s ease;
+  animation:cardFloat 6s ease-in-out infinite;
+}
+@keyframes cardFloat {
+  0%,100% { transform:perspective(800px) rotateX(1deg) rotateY(0.5deg); box-shadow:0 30px 80px rgba(0,0,0,0.6); }
+  50%      { transform:perspective(800px) rotateX(-0.5deg) rotateY(-1deg); box-shadow:0 40px 100px rgba(0,0,0,0.5); }
+}
+
+.letter-card::before {
+  content:''; position:absolute; top:0; left:0; right:0; height:4px;
+  background:linear-gradient(90deg,var(--rose),var(--gold),var(--rose-light),var(--rose));
+  background-size:200%; animation:shimmer 3s linear infinite;
+}
+@keyframes shimmer { to { background-position:200% 0; } }
+
+.letter-date { font-family:'Dancing Script',cursive; font-size:clamp(0.85rem,3vw,1rem); color:#c2185b; text-align:right; margin-bottom:1.2rem; opacity:0.8; }
+.letter-greeting { font-family:'Dancing Script',cursive; font-size:clamp(1.5rem,5.5vw,2rem); color:#8b1a4a; margin-bottom:1.2rem; line-height:1.3; }
+.letter-body { font-family:'Cormorant Garamond',serif; font-size:clamp(1rem,3.8vw,1.15rem); color:#3d1a2e; line-height:1.9; }
+.letter-paragraph { margin-bottom:1.4rem; min-height:1.4em; }
+.letter-signature { font-family:'Dancing Script',cursive; font-size:clamp(1.3rem,5vw,1.7rem); color:#c2185b; text-align:right; margin-top:1.5rem; line-height:1.5; white-space:pre-line; }
+
+.cursor-blink { display:inline-block; width:2px; height:1.1em; background:#c2185b; vertical-align:middle; margin-left:2px; animation:blink 0.7s step-end infinite; }
+@keyframes blink { 50% { opacity:0; } }
+
+/* ── 3D POLAROIDS ── */
+.polaroid-row { display:flex; justify-content:center; gap:1.2rem; flex-wrap:wrap; margin:1.8rem 0; opacity:0; transform:translateY(30px) rotateX(15deg); transition:all 0.9s cubic-bezier(0.34,1.2,0.64,1); perspective:600px; }
+.polaroid-row.visible { opacity:1; transform:translateY(0) rotateX(0deg); }
+
+.polaroid {
+  background:#fff;
+  padding:10px 10px 30px;
+  box-shadow:0 8px 25px rgba(0,0,0,0.35),0 2px 6px rgba(0,0,0,0.2);
+  transform:rotate(var(--rot,-3deg)) rotateY(0deg);
+  transform-style:preserve-3d;
+  transition:transform 0.4s cubic-bezier(0.34,1.4,0.64,1),box-shadow 0.4s ease;
+  cursor:pointer; position:relative;
+  width:min(130px,35vw);
+  animation:polaroidFloat var(--pdur,5s) ease-in-out infinite;
+}
+@keyframes polaroidFloat {
+  0%,100% { transform:rotate(var(--rot,-3deg)) translateY(0) rotateX(2deg); }
+  50%      { transform:rotate(var(--rot,-3deg)) translateY(-8px) rotateX(-2deg); }
+}
+.polaroid:hover { transform:rotate(0deg) scale(1.12) rotateY(8deg) translateZ(20px) !important; box-shadow:0 20px 50px rgba(0,0,0,0.5); animation-play-state:paused; }
+
+.polaroid-img-placeholder { width:100%; aspect-ratio:1; background:linear-gradient(135deg,#f8d7e3 0%,#fce4ec 40%,#f3e5f5 100%); display:flex; align-items:center; justify-content:center; font-size:2.2rem; border-radius:2px; }
+.polaroid-caption { position:absolute; bottom:6px; left:0; right:0; text-align:center; font-family:'Dancing Script',cursive; font-size:0.72rem; color:#999; }
+
+/* ── COUNTER ── */
+.counter-section { max-width:600px; width:100%; margin:0 auto 2rem; padding:0 1.5rem; opacity:0; transform:translateY(40px); transition:all 1s ease; }
+.counter-section.visible { opacity:1; transform:translateY(0); }
+
+.counter-card {
+  background:var(--glass);
+  border:1px solid var(--glass-border);
+  border-radius:22px;
+  padding:2rem 1.5rem;
+  text-align:center;
+  backdrop-filter:blur(20px);
+  box-shadow:0 0 60px rgba(255,107,138,0.1),inset 0 1px 0 rgba(255,255,255,0.1);
+  position:relative; overflow:hidden;
+  transform-style:preserve-3d;
+  animation:counterTilt 8s ease-in-out infinite;
+}
+@keyframes counterTilt {
+  0%,100% { transform:perspective(800px) rotateX(2deg) rotateY(1deg); }
+  33%      { transform:perspective(800px) rotateX(-1deg) rotateY(-2deg); }
+  66%      { transform:perspective(800px) rotateX(1deg) rotateY(2deg); }
+}
+.counter-card::before { content:''; position:absolute; inset:0; background:radial-gradient(ellipse at 50% 0%,rgba(255,107,138,0.15) 0%,transparent 60%); pointer-events:none; }
+
+.counter-title { font-family:'Cormorant Garamond',serif; font-size:clamp(0.9rem,3.5vw,1.1rem); color:var(--rose-light); letter-spacing:0.12em; margin-bottom:1.5rem; text-transform:uppercase; opacity:0.8; }
+.counter-grid { display:grid; grid-template-columns:repeat(2,1fr); gap:1rem; }
+.counter-item {
+  padding:1.1rem 0.5rem; border-radius:14px;
+  background:rgba(255,107,138,0.08); border:1px solid rgba(255,107,138,0.18);
+  transition:transform 0.3s ease;
+  animation:counterItem 3s ease-in-out infinite;
+}
+.counter-item:nth-child(1) { animation-delay:0s; }
+.counter-item:nth-child(2) { animation-delay:0.5s; }
+.counter-item:nth-child(3) { animation-delay:1s; }
+.counter-item:nth-child(4) { animation-delay:1.5s; }
+@keyframes counterItem {
+  0%,100% { transform:translateZ(0) scale(1); }
+  50%      { transform:translateZ(10px) scale(1.02); }
+}
+
+.counter-num { font-family:'Cormorant Garamond',serif; font-size:clamp(1.6rem,6vw,2.2rem); color:var(--rose-light); font-weight:300; line-height:1; text-shadow:0 0 25px rgba(255,107,138,0.6); display:block; }
+.counter-label { font-family:'Cormorant Garamond',serif; font-size:clamp(0.75rem,3vw,0.9rem); color:rgba(255,255,255,0.5); margin-top:0.3rem; display:block; letter-spacing:0.05em; }
+
+/* ── FINAL BTN ── */
+.final-btn-wrap { display:flex; justify-content:center; padding:1rem 1.5rem 3rem; opacity:0; transform:translateY(20px); transition:all 0.8s ease; }
+.final-btn-wrap.visible { opacity:1; transform:translateY(0); }
+
+.final-btn {
+  background:linear-gradient(135deg,var(--rose) 0%,var(--rose-deep) 100%);
+  border:none; border-radius:50px;
+  padding:1rem 2.5rem;
+  font-family:'Dancing Script',cursive;
+  font-size:clamp(1.1rem,4.5vw,1.4rem);
+  color:#fff; cursor:pointer;
+  box-shadow:0 0 30px rgba(255,107,138,0.5),0 10px 30px rgba(0,0,0,0.4);
+  animation:heartbeat 1.5s ease-in-out infinite;
+  transform-style:preserve-3d;
+}
+@keyframes heartbeat {
+  0%,100% { transform:scale(1) translateZ(0); box-shadow:0 0 30px rgba(255,107,138,0.5),0 10px 30px rgba(0,0,0,0.4); }
+  14%      { transform:scale(1.08) translateZ(8px); box-shadow:0 0 50px rgba(255,107,138,0.8),0 15px 40px rgba(0,0,0,0.4); }
+  28%      { transform:scale(1) translateZ(0); }
+  42%      { transform:scale(1.05) translateZ(5px); }
+}
+
+/* ══ SCENE 5: FINALE ══ */
+#scene-finale { background:radial-gradient(ellipse at 50% 40%,#2a0525 0%,#07030a 80%); perspective:800px; }
+
+.finale-text { text-align:center; padding:2rem; z-index:2; position:relative; }
+
+.finale-title {
+  font-family:'Dancing Script',cursive;
+  font-size:clamp(1.8rem,7vw,3rem);
+  color:var(--rose-light);
+  text-shadow:0 0 40px rgba(255,107,138,0.9),0 0 80px rgba(255,107,138,0.5);
+  line-height:1.3;
+  opacity:0; transform:scale(0.7) translateZ(-60px);
+  transition:all 1.2s cubic-bezier(0.34,1.4,0.64,1) 0.3s;
+}
+.finale-sub {
+  font-family:'Cormorant Garamond',serif;
+  font-size:clamp(1rem,4vw,1.4rem);
+  color:rgba(255,255,255,0.75);
+  margin-top:1rem; font-style:italic;
+  opacity:0; transform:translateY(25px);
+  transition:all 0.8s ease 1.1s;
+}
+.finale-love {
+  font-family:'Dancing Script',cursive;
+  font-size:clamp(1.4rem,5.5vw,2.2rem);
+  color:var(--rose);
+  margin-top:1rem;
+  text-shadow:0 0 30px rgba(255,107,138,0.8);
+  opacity:0; transform:translateY(25px);
+  transition:all 0.8s ease 1.8s;
+  animation:breathe 2.5s ease-in-out infinite 2.6s;
+}
+
+#scene-finale.active .finale-title { opacity:1; transform:scale(1) translateZ(0); }
+#scene-finale.active .finale-sub   { opacity:1; transform:translateY(0); }
+#scene-finale.active .finale-love  { opacity:1; transform:translateY(0); }
+
+/* ── MUSIC BTN ── */
+#music-btn {
+  position:fixed; top:16px; right:16px; z-index:100;
+  width:46px; height:46px;
+  background:rgba(255,255,255,0.08);
+  border:1px solid rgba(255,255,255,0.15);
+  border-radius:50%; display:flex; align-items:center; justify-content:center;
+  cursor:pointer; backdrop-filter:blur(12px);
+  font-size:1.2rem;
+  opacity:0; transform:scale(0.7);
+  transition:opacity 0.5s ease, transform 0.5s ease, background 0.3s ease;
+}
+#music-btn.visible { opacity:1; transform:scale(1); }
+#music-btn:hover { background:rgba(255,107,138,0.25); border-color:rgba(255,107,138,0.5); }
+#music-btn.playing { animation:spinNote 4s linear infinite; }
+@keyframes spinNote { to { transform:rotate(360deg); } }
+
+/* ── FLASH ── */
+#flash { position:fixed; inset:0; background:radial-gradient(circle,rgba(255,200,220,0.95) 0%,rgba(255,107,138,0.7) 50%,transparent 100%); z-index:50; opacity:0; pointer-events:none; transition:opacity 0.15s ease; }
+#flash.on { opacity:1; }
+
+/* ── 3D FLOATING HEARTS ── */
+.fheart {
+  position:fixed; pointer-events:none; z-index:5;
+  font-size:var(--size,1.2rem);
+  left:var(--x,50%);
+  bottom:-30px;
+  opacity:0;
+  animation:float3D var(--dur,5s) ease-in forwards;
+}
+@keyframes float3D {
+  0%   { opacity:0;   transform:translateY(0)     translateZ(0)    rotateX(0deg)  rotateY(0deg)  scale(0.5); }
+  10%  { opacity:0.9; }
+  50%  {              transform:translateY(-50vh)  translateZ(30px) rotateX(180deg) rotateY(120deg) scale(1.1); }
+  90%  { opacity:0.4; }
+  100% { opacity:0;   transform:translateY(-105vh) translateZ(-20px) rotateX(360deg) rotateY(240deg) scale(0.8); }
+}
+
+/* ── 3D ORBIT RING (finale decoration) ── */
+.orbit-ring {
+  position:fixed; top:50%; left:50%;
+  transform:translate(-50%,-50%);
+  width:min(500px,90vw); height:min(500px,90vw);
+  border:1px solid rgba(255,107,138,0.1);
+  border-radius:50%;
+  animation:orbitSpin 12s linear infinite;
+  pointer-events:none; z-index:3;
+}
+.orbit-ring:nth-child(2) { width:min(350px,70vw); height:min(350px,70vw); animation-duration:8s; animation-direction:reverse; border-color:rgba(240,192,128,0.1); }
+@keyframes orbitSpin { to { transform:translate(-50%,-50%) rotateX(70deg) rotate(360deg); } }
+</style>
+</head>
+<body>
+
+<!-- Background WebGL canvas -->
+<canvas id="bg-canvas"></canvas>
+<div id="flash"></div>
+<button id="music-btn" title="Музыка">🎵</button>
+
+<!-- SCENE 1 -->
+<div class="scene active" id="scene-loader">
+  <p class="loader-text">Для самой особенной девочки ❤️</p>
+  <div class="loader-bar"><div class="loader-fill"></div></div>
+</div>
+
+<!-- SCENE 2: 3D heart -->
+<div class="scene" id="scene-heart">
+  <canvas id="heart-canvas"></canvas>
+</div>
+
+<!-- SCENE 3: 3D envelope -->
+<div class="scene" id="scene-envelope">
+  <div class="envelope-wrap" id="envelope-btn">
+    <div class="envelope-3d" id="envelope-3d">
+      <div class="letter-slip" id="letter-slip"></div>
+      <div class="env-front"></div>
+      <div class="env-side"></div>
+      <div class="env-bottom"></div>
+      <div class="env-flap-3d" id="env-flap-3d">
+        <div class="flap-face"></div>
+      </div>
+      <div class="env-seal" id="env-seal">❤️</div>
+    </div>
+    <p class="envelope-hint">У тебя письмо ❤️</p>
+  </div>
+</div>
+
+<!-- SCENE 4: Letter -->
+<div class="scene" id="scene-letter">
+  <div class="letter-container">
+    <div class="letter-card">
+      <div class="letter-date" id="letter-date"></div>
+      <div class="letter-greeting" id="letter-greeting"></div>
+      <div class="letter-body" id="letter-body"></div>
+      <div class="letter-signature" id="letter-signature"></div>
+    </div>
+    <div class="polaroid-row" id="polaroid-1">
+      <div class="polaroid" style="--rot:-6deg;--pdur:5.2s">
+        <div> <img src="IMG_4304(1)(4)(1).jpg" class="polaroid-img"></div>
+<div></div>
+        <div class="polaroid-caption">❤️ Кажется, именно тогда я понял, как мне с тобой повезло.</div>
+      </div>
+      <div class="polaroid" style="--rot:4deg;--pdur:4.8s">
+        <div> <img src="IMG_5837(2)(2)(1)(1)(1).jpg" class="polaroid-img"></div>
+        <div class="polaroid-caption"> 🌷 Обычный день, который стал особенным благодаря тебе.</div>
+      </div>
+      <div class="polaroid" style="--rot:-2deg;--pdur:5.6s">
+        <div> <img src="IMG_5836(1).jpg" class="polaroid-img"></div>
+        <div class="polaroid-caption">наши вечера</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="counter-section" id="counter-section">
+    <div class="counter-card">
+      <p class="counter-title">Мы вместе уже</p>
+      <div class="counter-grid">
+        <div class="counter-item"><span class="counter-num" id="cnt-days">365</span><span class="counter-label">дней</span></div>
+        <div class="counter-item"><span class="counter-num" id="cnt-hours">8 760</span><span class="counter-label">часов</span></div>
+        <div class="counter-item"><span class="counter-num" id="cnt-mins">525 600</span><span class="counter-label">минут</span></div>
+        <div class="counter-item"><span class="counter-num" id="cnt-secs">0</span><span class="counter-label">секунд</span></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="final-btn-wrap" id="final-btn-wrap">
+    <button class="final-btn" id="final-btn">❤️ Нажми сюда</button>
+  </div>
+</div>
+
+<!-- SCENE 5: Finale -->
+<div class="scene" id="scene-finale">
+  <div class="orbit-ring"></div>
+  <div class="orbit-ring"></div>
+  <div class="finale-text">
+    <div class="finale-title">Happy One Year Anniversary ❤️</div>
+    <div class="finale-sub">Спасибо за этот прекрасный год</div>
+    <div class="finale-love">Я люблю тебя ❤️</div>
+  </div>
+</div>
+
+<script>
+// ══════════════════════════════════════════
+//  GLOBALS
+// ══════════════════════════════════════════
+const START_DATE = new Date(Date.now() - 365 * 24 * 3600 * 1000);
+let currentScene = 'loader';
+let audioCtx = null, musicPlaying = false, musicLoopTO = null;
+let heartRAF = null;
+
+function showScene(id) {
+  document.querySelectorAll('.scene').forEach(s => s.classList.remove('active'));
+  document.getElementById('scene-' + id).classList.add('active');
+  currentScene = id;
+}
+
+// ══════════════════════════════════════════
+//  BACKGROUND WEBGL — rotating star field + 3D orbiting particles
+// ══════════════════════════════════════════
+(function initBG() {
+  const canvas = document.getElementById('bg-canvas');
+  const gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
+  if (!gl) { initBGFallback(); return; }
+
+  let W, H;
+
+  const vsSource = `
+    attribute vec3 aPos;
+    attribute float aSize;
+    attribute float aBright;
+    uniform mat4 uMVP;
+    uniform float uTime;
+    varying float vBright;
+    void main(){
+      float twinkle = 0.7 + 0.3 * sin(uTime * 2.0 + aPos.x * 10.0 + aPos.y * 7.0);
+      vBright = aBright * twinkle;
+      gl_Position = uMVP * vec4(aPos, 1.0);
+      gl_PointSize = aSize * twinkle * (1.0 / gl_Position.w);
+    }`;
+
+  const fsSource = `
+    precision mediump float;
+    varying float vBright;
+    uniform vec3 uColor;
+    void main(){
+      vec2 c = gl_PointCoord - 0.5;
+      float d = length(c);
+      if(d > 0.5) discard;
+      float alpha = (1.0 - d*2.0) * vBright;
+      gl_FragColor = vec4(uColor, alpha);
+    }`;
+
+  function compileShader(type, src) {
+    const s = gl.createShader(type);
+    gl.shaderSource(s, src); gl.compileShader(s);
+    return s;
+  }
+  const prog = gl.createProgram();
+  gl.attachShader(prog, compileShader(gl.VERTEX_SHADER, vsSource));
+  gl.attachShader(prog, compileShader(gl.FRAGMENT_SHADER, fsSource));
+  gl.linkProgram(prog); gl.useProgram(prog);
+
+  const aPos    = gl.getAttribLocation(prog, 'aPos');
+  const aSize   = gl.getAttribLocation(prog, 'aSize');
+  const aBright = gl.getAttribLocation(prog, 'aBright');
+  const uMVP    = gl.getUniformLocation(prog, 'uMVP');
+  const uTime   = gl.getUniformLocation(prog, 'uTime');
+  const uColor  = gl.getUniformLocation(prog, 'uColor');
+
+  // Generate star sphere
+  const N = 500;
+  const pos = new Float32Array(N * 3);
+  const sizes = new Float32Array(N);
+  const brights = new Float32Array(N);
+  for (let i = 0; i < N; i++) {
+    const theta = Math.random() * Math.PI * 2;
+    const phi   = Math.acos(2 * Math.random() - 1);
+    const r     = 3 + Math.random() * 2;
+    pos[i*3]   = r * Math.sin(phi) * Math.cos(theta);
+    pos[i*3+1] = r * Math.sin(phi) * Math.sin(theta);
+    pos[i*3+2] = r * Math.cos(phi);
+    sizes[i]   = Math.random() * 4 + 2;
+    brights[i] = Math.random() * 0.8 + 0.2;
+  }
+
+  // Orbiting rose particles
+  const OR = 200;
+  for (let i = 0; i < OR; i++) {
+    const a = (i / OR) * Math.PI * 2;
+    const ring = Math.floor(Math.random() * 3);
+    const rad  = [1.2, 1.8, 2.4][ring];
+    const tilt = [0.4, 0.7, 1.0][ring];
+    pos.push && null; // already in same buffer? — use separate
+  }
+
+  const bufPos    = gl.createBuffer(); gl.bindBuffer(gl.ARRAY_BUFFER, bufPos); gl.bufferData(gl.ARRAY_BUFFER, pos, gl.STATIC_DRAW);
+  const bufSize   = gl.createBuffer(); gl.bindBuffer(gl.ARRAY_BUFFER, bufSize); gl.bufferData(gl.ARRAY_BUFFER, sizes, gl.STATIC_DRAW);
+  const bufBright = gl.createBuffer(); gl.bindBuffer(gl.ARRAY_BUFFER, bufBright); gl.bufferData(gl.ARRAY_BUFFER, brights, gl.STATIC_DRAW);
+
+  // Orbit particles separate geometry
+  const OP = 300;
+  const opos   = new Float32Array(OP * 3);
+  const osizes = new Float32Array(OP);
+  const obrights = new Float32Array(OP);
+  for (let i = 0; i < OP; i++) {
+    const ring = i % 3;
+    const rad  = [0.9, 1.5, 2.1][ring];
+    const tilt = [0.3, 0.6, 0.9][ring];
+    const a    = (i / OP) * Math.PI * 20 + ring;
+    opos[i*3]   = rad * Math.cos(a);
+    opos[i*3+1] = rad * Math.sin(a) * Math.cos(tilt);
+    opos[i*3+2] = rad * Math.sin(a) * Math.sin(tilt);
+    osizes[i]   = Math.random() * 3 + 1;
+    obrights[i] = Math.random() * 0.6 + 0.3;
+  }
+  const obufPos    = gl.createBuffer(); gl.bindBuffer(gl.ARRAY_BUFFER, obufPos); gl.bufferData(gl.ARRAY_BUFFER, opos, gl.DYNAMIC_DRAW);
+  const obufSize   = gl.createBuffer(); gl.bindBuffer(gl.ARRAY_BUFFER, obufSize); gl.bufferData(gl.ARRAY_BUFFER, osizes, gl.STATIC_DRAW);
+  const obufBright = gl.createBuffer(); gl.bindBuffer(gl.ARRAY_BUFFER, obufBright); gl.bufferData(gl.ARRAY_BUFFER, obrights, gl.STATIC_DRAW);
+
+  function resize() {
+    W = canvas.width  = window.innerWidth;
+    H = canvas.height = window.innerHeight;
+    gl.viewport(0, 0, W, H);
+  }
+  resize(); window.addEventListener('resize', resize);
+
+  function mat4Perspective(fov, aspect, near, far) {
+    const f = 1 / Math.tan(fov / 2), nf = 1 / (near - far);
+    return new Float32Array([
+      f/aspect,0,0,0,
+      0,f,0,0,
+      0,0,(far+near)*nf,-1,
+      0,0,2*far*near*nf,0
+    ]);
+  }
+
+  function mat4RotY(a) {
+    const c=Math.cos(a),s=Math.sin(a);
+    return new Float32Array([c,0,s,0, 0,1,0,0, -s,0,c,0, 0,0,0,1]);
+  }
+  function mat4RotX(a) {
+    const c=Math.cos(a),s=Math.sin(a);
+    return new Float32Array([1,0,0,0, 0,c,-s,0, 0,s,c,0, 0,0,0,1]);
+  }
+  function mat4Mul(a,b) {
+    const r=new Float32Array(16);
+    for(let i=0;i<4;i++) for(let j=0;j<4;j++) {
+      let v=0; for(let k=0;k<4;k++) v+=a[i*4+k]*b[k*4+j];
+      r[i*4+j]=v;
+    }
+    return r;
+  }
+
+  function drawPoints(bPos, bSz, bBr, count, color) {
+    gl.bindBuffer(gl.ARRAY_BUFFER, bPos);
+    gl.vertexAttribPointer(aPos,3,gl.FLOAT,false,0,0); gl.enableVertexAttribArray(aPos);
+    gl.bindBuffer(gl.ARRAY_BUFFER, bSz);
+    gl.vertexAttribPointer(aSize,1,gl.FLOAT,false,0,0); gl.enableVertexAttribArray(aSize);
+    gl.bindBuffer(gl.ARRAY_BUFFER, bBr);
+    gl.vertexAttribPointer(aBright,1,gl.FLOAT,false,0,0); gl.enableVertexAttribArray(aBright);
+    gl.uniform3fv(uColor, color);
+    gl.drawArrays(gl.POINTS, 0, count);
+  }
+
+  let t0 = null;
+  function frame(ts) {
+    if (!t0) t0 = ts;
+    const t = (ts - t0) / 1000;
+
+    gl.clearColor(0.027, 0.012, 0.04, 1);
+    gl.clear(gl.COLOR_BUFFER_BIT);
+    gl.enable(gl.BLEND);
+    gl.blendFunc(gl.SRC_ALPHA, gl.ONE);
+
+    const proj  = mat4Perspective(0.9, W / H, 0.1, 20);
+    const rotY  = mat4RotY(t * 0.08);
+    const rotX  = mat4RotX(Math.sin(t * 0.05) * 0.15);
+    const view  = mat4Mul(rotY, rotX);
+    const trans = new Float32Array([1,0,0,0, 0,1,0,0, 0,0,1,0, 0,0,-5,1]);
+    const mvp   = mat4Mul(mat4Mul(proj, trans), view);
+
+    gl.uniformMatrix4fv(uMVP, false, mvp);
+    gl.uniform1f(uTime, t);
+
+    // Stars
+    drawPoints(bufPos, bufSize, bufBright, N, [1.0, 0.87, 0.94]);
+
+    // Rotating orbit particles
+    const orbitRotY = mat4RotY(t * 0.3);
+    const orbitMVP  = mat4Mul(mat4Mul(proj, trans), mat4Mul(view, orbitRotY));
+    gl.uniformMatrix4fv(uMVP, false, orbitMVP);
+    drawPoints(obufPos, obufSize, obufBright, OP, [1.0, 0.42, 0.54]);
+
+    requestAnimationFrame(frame);
+  }
+  requestAnimationFrame(frame);
+
+  function initBGFallback() {
+    // Canvas 2D fallback
+    const c2 = document.getElementById('bg-canvas');
+    const ctx = c2.getContext('2d');
+    let stars = [];
+    function resize2() {
+      c2.width = window.innerWidth; c2.height = window.innerHeight;
+      stars = Array.from({length:150}, () => ({
+        x: Math.random()*c2.width, y: Math.random()*c2.height,
+        r: Math.random()*1.5+0.3, phase: Math.random()*Math.PI*2, speed: Math.random()*0.5+0.2
+      }));
+    }
+    resize2(); window.addEventListener('resize', resize2);
+    function draw2(t) {
+      ctx.clearRect(0,0,c2.width,c2.height);
+      stars.forEach(s => {
+        const br = 0.4 + 0.3*Math.sin(t/1000*s.speed+s.phase);
+        ctx.beginPath(); ctx.arc(s.x,s.y,s.r,0,Math.PI*2);
+        ctx.fillStyle=`rgba(255,220,235,${br})`; ctx.fill();
+      });
+      requestAnimationFrame(draw2);
+    }
+    requestAnimationFrame(draw2);
+  }
+})();
+
+// ══════════════════════════════════════════
+//  3D HEART — WebGL particle system
+// ══════════════════════════════════════════
+function startHeartScene() {
+  const canvas = document.getElementById('heart-canvas');
+  const gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
+  if (!gl) { startHeartFallback(canvas); return; }
+
+  let W = canvas.width = window.innerWidth;
+  let H = canvas.height = window.innerHeight;
+  window.addEventListener('resize', () => { W=canvas.width=window.innerWidth; H=canvas.height=window.innerHeight; gl.viewport(0,0,W,H); });
+
+  const vs = `
+    attribute vec3 aPos;
+    attribute vec3 aOrigin;
+    attribute float aPhase;
+    attribute float aSize;
+    uniform mat4 uMVP;
+    uniform float uT;
+    uniform float uGather;
+    varying float vAlpha;
+    varying float vPhase;
+    void main(){
+      vec3 p = mix(aOrigin, aPos, uGather);
+      // 3D heart beat pulse
+      float beat = 1.0 + 0.08 * sin(uT * 5.0 + aPhase);
+      p *= beat;
+      // Slow rotation on Y
+      float ry = uT * 0.4;
+      float cosR = cos(ry), sinR = sin(ry);
+      vec3 rp = vec3(p.x*cosR - p.z*sinR, p.y, p.x*sinR + p.z*cosR);
+      // Slight tilt on X
+      float rx = sin(uT*0.2) * 0.2;
+      float cosX = cos(rx), sinX = sin(rx);
+      rp = vec3(rp.x, rp.y*cosX - rp.z*sinX, rp.y*sinX + rp.z*cosX);
+      gl_Position = uMVP * vec4(rp, 1.0);
+      float twinkle = 0.7 + 0.3 * sin(uT * 3.0 + aPhase * 7.0);
+      vAlpha = uGather * twinkle;
+      vPhase = aPhase;
+      gl_PointSize = aSize * (1.5 / gl_Position.w) * (0.8 + 0.4*sin(uT+aPhase));
+    }`;
+
+  const fs = `
+    precision mediump float;
+    varying float vAlpha;
+    varying float vPhase;
+    void main(){
+      vec2 c = gl_PointCoord - 0.5;
+      float d = length(c);
+      if(d > 0.5) discard;
+      float glow = 1.0 - d*2.0;
+      float r = 1.0;
+      float g = 0.3 + 0.2*sin(vPhase);
+      float b = 0.45 + 0.15*sin(vPhase*2.0);
+      gl_FragColor = vec4(r, g, b, glow * vAlpha);
+    }`;
+
+  function shader(type, src) {
+    const s = gl.createShader(type);
+    gl.shaderSource(s, src); gl.compileShader(s);
+    return s;
+  }
+  const prog = gl.createProgram();
+  gl.attachShader(prog, shader(gl.VERTEX_SHADER, vs));
+  gl.attachShader(prog, shader(gl.FRAGMENT_SHADER, fs));
+  gl.linkProgram(prog); gl.useProgram(prog);
+
+  const loc = {
+    aPos: gl.getAttribLocation(prog,'aPos'),
+    aOrigin: gl.getAttribLocation(prog,'aOrigin'),
+    aPhase: gl.getAttribLocation(prog,'aPhase'),
+    aSize: gl.getAttribLocation(prog,'aSize'),
+    uMVP: gl.getUniformLocation(prog,'uMVP'),
+    uT: gl.getUniformLocation(prog,'uT'),
+    uGather: gl.getUniformLocation(prog,'uGather'),
+  };
+
+  // Heart surface in 3D — parametric
+  const N = 2000;
+  const heartPos    = new Float32Array(N * 3);
+  const originPos   = new Float32Array(N * 3);
+  const phases      = new Float32Array(N);
+  const particleSizes = new Float32Array(N);
+  const SC = 0.045;
+
+  for (let i = 0; i < N; i++) {
+    // Heart surface parametric (u,v)
+    const u = Math.random() * Math.PI * 2;
+    const v = Math.random() * Math.PI * 2;
+    // 3D heart formula
+    const x = 16 * Math.pow(Math.sin(u), 3);
+    const y = -(13*Math.cos(u) - 5*Math.cos(2*u) - 2*Math.cos(3*u) - Math.cos(4*u));
+    const z = (8 * Math.sin(v) * Math.cos(u)) * 0.4; // depth
+    heartPos[i*3]   = x * SC;
+    heartPos[i*3+1] = y * SC * 0.85;
+    heartPos[i*3+2] = z * SC;
+
+    // Random origin scattered in sphere
+    const r     = 3 + Math.random() * 2;
+    const theta = Math.random() * Math.PI * 2;
+    const phi   = Math.acos(2*Math.random()-1);
+    originPos[i*3]   = r * Math.sin(phi) * Math.cos(theta);
+    originPos[i*3+1] = r * Math.sin(phi) * Math.sin(theta);
+    originPos[i*3+2] = r * Math.cos(phi);
+
+    phases[i]       = Math.random() * Math.PI * 2;
+    particleSizes[i] = Math.random() * 6 + 3;
+  }
+
+  function buf(data) {
+    const b = gl.createBuffer(); gl.bindBuffer(gl.ARRAY_BUFFER,b); gl.bufferData(gl.ARRAY_BUFFER,data,gl.STATIC_DRAW); return b;
+  }
+  const bPos    = buf(heartPos);
+  const bOrigin = buf(originPos);
+  const bPhase  = buf(phases);
+  const bSize   = buf(particleSizes);
+
+  function mat4Perspective(fov,asp,n,f) {
+    const t=1/Math.tan(fov/2),nf=1/(n-f);
+    return new Float32Array([t/asp,0,0,0, 0,t,0,0, 0,0,(f+n)*nf,-1, 0,0,2*f*n*nf,0]);
+  }
+  function mat4Trans(x,y,z) {
+    return new Float32Array([1,0,0,0, 0,1,0,0, 0,0,1,0, x,y,z,1]);
+  }
+  function mat4Mul(a,b) {
+    const r=new Float32Array(16);
+    for(let i=0;i<4;i++) for(let j=0;j<4;j++) { let v=0; for(let k=0;k<4;k++) v+=a[i*4+k]*b[k*4+j]; r[i*4+j]=v; }
+    return r;
+  }
+
+  let t0=null, gather=0, beatCount=0, beatDone=false, sceneSwitch=false;
+
+  function frame(ts) {
+    if(!t0) t0=ts;
+    const t = (ts-t0)/1000;
+    gather = Math.min(1, t/2.5); // gather over 2.5 seconds
+
+    gl.viewport(0,0,W,H);
+    gl.clearColor(0,0,0,0);
+    gl.clear(gl.COLOR_BUFFER_BIT);
+    gl.enable(gl.BLEND);
+    gl.blendFunc(gl.SRC_ALPHA, gl.ONE);
+
+    const proj = mat4Perspective(0.85, W/H, 0.01, 50);
+    const view = mat4Trans(0, 0.02, -2.5);
+    const mvp  = mat4Mul(proj, view);
+    gl.uniformMatrix4fv(loc.uMVP, false, mvp);
+    gl.uniform1f(loc.uT, t);
+    gl.uniform1f(loc.uGather, gather);
+
+    function setAttr(loc_, buf_) { gl.bindBuffer(gl.ARRAY_BUFFER,buf_); gl.vertexAttribPointer(loc_,3,gl.FLOAT,false,0,0); gl.enableVertexAttribArray(loc_); }
+    function setAttr1(loc_, buf_) { gl.bindBuffer(gl.ARRAY_BUFFER,buf_); gl.vertexAttribPointer(loc_,1,gl.FLOAT,false,0,0); gl.enableVertexAttribArray(loc_); }
+
+    setAttr(loc.aPos, bPos);
+    setAttr(loc.aOrigin, bOrigin);
+    setAttr1(loc.aPhase, bPhase);
+    setAttr1(loc.aSize, bSize);
+
+    gl.drawArrays(gl.POINTS, 0, N);
+
+    // Count beats after gather
+    if (gather >= 1) {
+      const newBeat = Math.floor((t - 2.5) / 1.3);
+      if (newBeat > beatCount && newBeat >= 0) {
+        beatCount = newBeat;
+        if (beatCount >= 3 && !sceneSwitch) {
+          sceneSwitch = true;
+          setTimeout(() => {
+            cancelAnimationFrame(heartRAF);
+            gl.clear(gl.COLOR_BUFFER_BIT);
+            showScene('envelope');
+          }, 700);
+        }
+      }
+    }
+
+    heartRAF = requestAnimationFrame(frame);
+  }
+  heartRAF = requestAnimationFrame(frame);
+}
+
+// 2D Fallback heart
+function startHeartFallback(canvas) {
+  const ctx = canvas.getContext('2d');
+  let W = canvas.width = window.innerWidth;
+  let H = canvas.height = window.innerHeight;
+  window.addEventListener('resize', () => { W=canvas.width=window.innerWidth; H=canvas.height=window.innerHeight; });
+
+  const SC = Math.min(W,H) * 0.22;
+  let N = 350, particles = [];
+  for (let i=0;i<N;i++) {
+    const u = Math.random()*Math.PI*2;
+    const x = 16*Math.pow(Math.sin(u),3);
+    const y = -(13*Math.cos(u)-5*Math.cos(2*u)-2*Math.cos(3*u)-Math.cos(4*u));
+    const r = 3+Math.random()*2;
+    const th = Math.random()*Math.PI*2;
+    const ph = Math.acos(2*Math.random()-1);
+    particles.push({
+      tx:W/2+x*SC/16, ty:H/2+y*SC/13 - H*0.04,
+      x:W/2+r*100*Math.sin(ph)*Math.cos(th), y:H/2+r*100*Math.sin(ph)*Math.sin(th),
+      phase:Math.random()*Math.PI*2, size:Math.random()*3+1.5,
+      color:`hsl(${Math.random()*40+330},90%,70%)`
+    });
+  }
+
+  let t0=null, beatCount=0, beatDone=false, switched=false;
+  function draw(ts) {
+    if(!t0) t0=ts;
+    const t=(ts-t0)/1000;
+    const g=Math.min(1,t/2.5);
+    ctx.clearRect(0,0,W,H);
+    const beat = 1 + 0.06*Math.sin(t*5);
+    particles.forEach(p=>{
+      p.x+=(p.tx*beat-(W/2)*(beat-1)-p.x)*0.04;
+      p.y+=(p.ty*beat-(H/2)*(beat-1)-p.y)*0.04;
+      const br=0.5+0.4*g;
+      ctx.beginPath(); ctx.arc(p.x,p.y,p.size,0,Math.PI*2);
+      ctx.fillStyle=p.color.replace('hsl','hsla').replace(')',`,${br})`);
+      ctx.shadowColor=p.color; ctx.shadowBlur=8; ctx.fill();
+    });
+    ctx.shadowBlur=0;
+    if(g>=1){
+      const nb=Math.floor((t-2.5)/1.3);
+      if(nb>beatCount&&nb>=0){beatCount=nb; if(beatCount>=3&&!switched){switched=true; setTimeout(()=>{cancelAnimationFrame(heartRAF);showScene('envelope');},700);}}
+    }
+    heartRAF=requestAnimationFrame(draw);
+  }
+  heartRAF=requestAnimationFrame(draw);
+}
+
+// ══════════════════════════════════════════
+//  ENVELOPE
+// ══════════════════════════════════════════
+let envelopeOpened = false;
+document.getElementById('envelope-btn').addEventListener('click', () => {
+  if (envelopeOpened) return;
+  envelopeOpened = true;
+  // Stop floating animation
+  const env = document.getElementById('envelope-3d');
+  env.style.animation = 'none';
+  env.style.transform = 'rotateX(0deg) rotateY(0deg)';
+
+  // 3D flip open flap
+  document.getElementById('env-flap-3d').classList.add('open');
+  document.getElementById('env-seal').style.opacity = '0';
+  document.getElementById('env-seal').style.transform = 'translate(-50%,-50%) scale(0)';
+
+  // Letter flies out with 3D rise
+  setTimeout(() => {
+    const slip = document.getElementById('letter-slip');
+    slip.style.transition = 'transform 1.3s cubic-bezier(0.34,1.3,0.64,1), opacity 0.3s ease';
+    slip.style.transform = 'translateY(-140%) translateZ(30px) rotateX(-5deg)';
+  }, 500);
+
+  setTimeout(() => {
+    showScene('letter');
+    startLetter();
+    startCounter();
+    document.getElementById('music-btn').classList.add('visible');
+  }, 1600);
+});
+
+// ══════════════════════════════════════════
+//  LETTER TYPEWRITER
+// ══════════════════════════════════════════
+const LETTER_DATE = (() => {
+  const d = new Date();
+  const m = ['января','февраля','марта','апреля','мая','июня','июля','августа','сентября','октября','ноября','декабря'];
+  return `${d.getDate()} ${m[d.getMonth()]} ${d.getFullYear()}`;
+})();
+
+const PARAGRAPHS = [
+  'Трудно поверить, что прошёл целый год. Год, который изменил всё — как я смотрю на утро, как засыпаю ночью, как улыбаюсь без причины посреди дня.',
+  'Я помню каждую мелочь: твой смех, который хочется слушать снова и снова; моменты тишины, когда мы просто были рядом и этого было достаточно; все маленькие истории, которые стали только нашими.',
+  'Ты сделала этот год самым тёплым в моей жизни. Спасибо за твою доброту, за терпение, за то, что ты просто есть.',
+  'Впереди ещё много лет — и каждый из них я хочу прожить рядом с тобой.',
+];
+
+function typeText(el, text, speed, done) {
+  let i = 0;
+  const cursor = document.createElement('span');
+  cursor.className = 'cursor-blink';
+  el.appendChild(cursor);
+  const iv = setInterval(() => {
+    if (i < text.length) { cursor.before(text[i++]); }
+    else { clearInterval(iv); cursor.remove(); if (done) setTimeout(done, 350); }
+  }, speed);
+}
+
+function startLetter() {
+  document.getElementById('letter-date').textContent = LETTER_DATE;
+  setTimeout(() => {
+    typeText(document.getElementById('letter-greeting'), 'Моя дорогая,Анюта', 70, () => {
+      let idx = 0;
+      const bodyEl = document.getElementById('letter-body');
+      function next() {
+        if (idx >= PARAGRAPHS.length) {
+          setTimeout(() => {
+            typeText(document.getElementById('letter-signature'), 'С любовью,\nтвой Богдан ❤️', 65, () => {
+              showPolaroids(); showCounter(); showFinalBtn();
+            });
+          }, 500);
+          return;
+        }
+        const p = document.createElement('p');
+        p.className = 'letter-paragraph';
+        bodyEl.appendChild(p);
+        // Auto-scroll
+        setTimeout(() => p.scrollIntoView({behavior:'smooth',block:'nearest'}), 100);
+        typeText(p, PARAGRAPHS[idx++], 33, () => setTimeout(next, 550));
+      }
+      setTimeout(next, 350);
+    });
+  }, 400);
+}
+
+function showPolaroids() { setTimeout(() => document.getElementById('polaroid-1').classList.add('visible'), 200); }
+
+// ══════════════════════════════════════════
+//  COUNTER
+// ══════════════════════════════════════════
+function startCounter() {
+  function upd() {
+    const diff = Math.floor((Date.now() - START_DATE.getTime()) / 1000);
+    document.getElementById('cnt-days').textContent  = Math.floor(diff/86400).toLocaleString('ru');
+    document.getElementById('cnt-hours').textContent = Math.floor(diff/3600).toLocaleString('ru');
+    document.getElementById('cnt-mins').textContent  = Math.floor(diff/60).toLocaleString('ru');
+    document.getElementById('cnt-secs').textContent  = diff.toLocaleString('ru');
+  }
+  upd(); setInterval(upd, 1000);
+}
+function showCounter()  { setTimeout(() => document.getElementById('counter-section').classList.add('visible'), 700); }
+function showFinalBtn() { setTimeout(() => document.getElementById('final-btn-wrap').classList.add('visible'), 1100); }
+
+// ══════════════════════════════════════════
+//  FINALE
+// ══════════════════════════════════════════
+document.getElementById('final-btn').addEventListener('click', triggerFinale);
+
+function triggerFinale() {
+  const fl = document.getElementById('flash');
+  fl.classList.add('on'); setTimeout(() => fl.classList.remove('on'), 250);
+  spawnHearts(100);
+  setTimeout(() => { showScene('finale'); spawnHearts(50); stopMusic(); }, 600);
+}
+
+function spawnHearts(count) {
+  const emojis = ['❤️','💕','💗','💖','💝','💓','🌸','✨','💫'];
+  for (let i = 0; i < count; i++) {
+    setTimeout(() => {
+      const h = document.createElement('div');
+      h.className = 'fheart';
+      h.style.setProperty('--x',   Math.random()*100+'vw');
+      h.style.setProperty('--dur', (Math.random()*3+3.5)+'s');
+      h.style.setProperty('--size',(Math.random()*1.8+0.8)+'rem');
+      h.textContent = emojis[Math.floor(Math.random()*emojis.length)];
+      document.body.appendChild(h);
+      setTimeout(() => h.remove(), 8000);
+    }, i * 55);
+  }
+}
+
+// ══════════════════════════════════════════
+//  MUSIC (Web Audio)
+// ══════════════════════════════════════════
+function initAudio() {
+  if (!audioCtx) audioCtx = new (window.AudioContext||window.webkitAudioContext)();
+}
+
+function playNote(freq, t, dur, gain=0.12, type='sine') {
+  const o = audioCtx.createOscillator();
+  const g = audioCtx.createGain();
+  o.connect(g); g.connect(audioCtx.destination);
+  o.type = type; o.frequency.setValueAtTime(freq, t);
+  g.gain.setValueAtTime(0, t);
+  g.gain.linearRampToValueAtTime(gain, t + 0.05);
+  g.gain.exponentialRampToValueAtTime(0.001, t + dur);
+  o.start(t); o.stop(t + dur + 0.1);
+}
+
+const MELODY = [
+  [523.25,0.5],[587.33,0.5],[659.25,0.5],[698.46,0.5],
+  [783.99,1.0],[698.46,0.5],[659.25,0.5],
+  [587.33,1.0],[523.25,0.5],[493.88,0.5],
+  [440,1.5],[392,0.5],
+  [349.23,0.5],[392,0.5],[440,0.5],[493.88,0.5],
+  [523.25,2.0]
+];
+
+function playMelody() {
+  if (!audioCtx || musicPlaying) return;
+  musicPlaying = true;
+  document.getElementById('music-btn').classList.add('playing');
+  document.getElementById('music-btn').textContent = '🎶';
+
+  function sched(offset) {
+    let t = audioCtx.currentTime + offset;
+    MELODY.forEach(([f,d]) => {
+      playNote(f, t, d*0.85, 0.11);
+      playNote(f/2, t, d*0.7, 0.05, 'triangle');
+      t += d * 0.42;
+    });
+    const total = MELODY.reduce((s,[,d])=>s+d*0.42,0);
+    if (musicPlaying) musicLoopTO = setTimeout(() => sched(0), total*1000 - 150);
+  }
+  sched(0.1);
+}
+
+function stopMusic() {
+  musicPlaying = false;
+  if (musicLoopTO) clearTimeout(musicLoopTO);
+  const btn = document.getElementById('music-btn');
+  btn.classList.remove('playing'); btn.textContent = '🎵';
+}
+
+document.getElementById('music-btn').addEventListener('click', () => {
+  initAudio();
+  if (audioCtx.state === 'suspended') audioCtx.resume();
+  musicPlaying ? stopMusic() : playMelody();
+});
+
+// ══════════════════════════════════════════
+//  FLOW
+// ══════════════════════════════════════════
+setTimeout(() => {
+  showScene('heart');
+  startHeartScene();
+  spawnHearts(6);
+}, 4600);
+
+setInterval(() => {
+  if (currentScene === 'finale') spawnHearts(4);
+}, 1800);
+</script>
+</body>
+</html>
